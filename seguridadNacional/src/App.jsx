@@ -1,13 +1,40 @@
-import React from 'react'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './components/Login';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex items-center justify-center h-screen">Cargando...</div>;
+  return user ? children : <Navigate to="/login" />;
+};
 
 const App = () => {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-sky-700">
-        HI, WELCOME TO THE SECURITY SYSTEM OF THE NATIONAL POLICE OF COLOMBIA
-      </h1>
-    </div>
-  )
-}
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/home" />} />
+            <Route path="home" element={<Home />} />
+            <Route path="dashboard" element={<div className="p-6"><h1 className="text-2xl font-bold">Dashboard</h1><p>Contenido del Dashboard...</p></div>} />
+            <Route path="users" element={<div className="p-6"><h1 className="text-2xl font-bold">Usuarios</h1><p>Gestión de usuarios...</p></div>} />
+            <Route path="reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reportes</h1><p>Reportes del sistema...</p></div>} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+};
 
-export default App
+export default App;
