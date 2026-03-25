@@ -4,6 +4,11 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import Home from './pages/Home';
+import Reportes from './pages/Reportes';
+import PersonalReport from './pages/PersonalReport';
+import VehiclesReport from './pages/VehiclesReport';
+import IncidentsReport from './pages/IncidentsReport';
+import ApprovalReports from './pages/ApprovalReports';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -29,7 +34,11 @@ const App = () => {
             <Route path="home" element={<Home />} />
             <Route path="dashboard" element={<div className="p-6"><h1 className="text-2xl font-bold">Dashboard</h1><p>Contenido del Dashboard...</p></div>} />
             <Route path="users" element={<div className="p-6"><h1 className="text-2xl font-bold">Usuarios</h1><p>Gestión de usuarios...</p></div>} />
-            <Route path="reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reportes</h1><p>Reportes del sistema...</p></div>} />
+            <Route path="reportes" element={<Reportes />} />
+            <Route path="reportes/personal" element={<PersonalReport />} />
+            <Route path="reportes/vehiculos" element={<VehiclesReport />} />
+            <Route path="reportes/incidentes" element={<IncidentsReport />} />
+            <Route path="reportes/aprobacion" element={<ApprovalReports />} />
           </Route>
         </Routes>
       </Router>
