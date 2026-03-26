@@ -62,7 +62,7 @@ function Reportes() {
               <div
                 key={report.id}
                 className="group cursor-pointer"
-                onClick={() => navigate(report.path)}
+                onClick={() => navigate(`${report.path}?tipo=${encodeURIComponent(report.title)}`)}
               >
                 <div
                   className={`bg-gradient-to-br ${report.color} rounded-xl shadow-lg p-5 text-white transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden relative`}

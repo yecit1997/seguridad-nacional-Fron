@@ -1,15 +1,47 @@
 import { createReporte } from "../services/reporte.service";
-import React, { useState } from 'react';
+import { getTipos } from "../services/tipoReporte.service";
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 function PersonalReport() {
+  const [searchParams] = useSearchParams();
+  const tipoSeleccionado = searchParams.get('tipo');
+
   const [formData, setFormData] = useState({
     // Agrega aquí los campos necesarios para el reporte de personal
     dni: '', //Documento de la persona a la cual se le hace el reporte
     departamento: '',
-    tipo: 'entrada',
+    tipo: '',
     descripcion: '',
     hora: new Date().toLocaleTimeString(),
   });
+
+  const [tipos, setTipos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTipos = async () => {
+      try {
+        const response = await getTipos();
+        const items = Array.isArray(response) ? response : response.data || [];
+        setTipos(items);
+
+        // Preseleccionar el tipo si viene de la URL
+        if (tipoSeleccionado) {
+          const tipoEncontrado = items.find(tipo => tipo.nombre === tipoSeleccionado);
+          if (tipoEncontrado) {
+            setFormData(prev => ({ ...prev, tipo: tipoEncontrado.nombre }));
+          }
+        }
+      } catch (error) {
+        console.error('Error al cargar tipos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTipos();
+  }, [tipoSeleccionado]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,7 +60,7 @@ const handleSubmit = async (e) => {
     setFormData({
       dni: '',
       departamento: '',
-      tipo: 'entrada',
+      tipo: '',
       descripcion: '',
       hora: new Date().toLocaleTimeString(),
     });
@@ -72,11 +104,19 @@ const handleSubmit = async (e) => {
               name="tipo"
               value={formData.tipo}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
+              required
+              disabled
             >
-              <option value="entrada">Entrada</option>
-              <option value="salida">Salida</option>
+              <option value="">Selecciona un tipo</option>
+              {tipos.map((tipo) => (
+                <option key={tipo.id || tipo.id_tipo_reporte} value={tipo.nombre}>
+                  {tipo.nombre}
+                </option>
+              ))}
             </select>
+            {/* Input hidden para enviar el valor disabled */}
+            <input type="hidden" name="tipo" value={formData.tipo} />
           </div>
           <div className="mb-6">
             <label className="block text-gray-700 font-semibold mb-2">Descripción</label>
