@@ -65,7 +65,7 @@ const TableReport = () => {
             </thead>
             <tbody>
               {reportes.map((r, index) => (
-                <tr key={r.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                <tr key={r.id_reporte} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                   <td className="border border-gray-300 px-4 py-2 text-sm">{r.id_reporte}</td>
                   <td className="border border-gray-300 px-4 py-2 font-semibold">{r.tipo.nombre}</td>
                   <td className="border border-gray-300 px-4 py-2 text-sm text-gray-700">{r.descripcion || 'Sin descripción'}</td>

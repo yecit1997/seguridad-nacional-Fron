@@ -8,10 +8,10 @@ const Sidebar = () => {
         { path: '/home', label: 'Inicio', icon: '🏠' },
         { path: '/dashboard', label: 'Analisis', icon: '📊' },
         { path: '/users', label: 'Usuarios', icon: '👥' },
+        { path: '#', label: 'Vehiculos', icon: '🚗' },
         { path: '/reportes', label: 'Reportes', icon: '📋' },
-        { path: '#', label: 'Administración', icon: '🛠️' },
+        { path: '/admin', label: 'Administración', icon: '🛠️' },
         { path: '/settings', label: 'Configuración', icon: '⚙️' },
-        { path: '/contact', label: 'Contacto', icon: '📞' },
         { path: '/help', label: 'Ayuda', icon: '❓' },
     ];
 

@@ -9,6 +9,9 @@ import PersonalReport from './pages/PersonalReport';
 import VehiclesReport from './pages/VehiclesReport';
 import IncidentsReport from './pages/IncidentsReport';
 import ApprovalReports from './pages/ApprovalReports';
+import Admin from './pages/Admin';
+import TipoReportes from './pages/TipoReportes';
+import StatusReportes from './pages/StatusReportes';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -39,6 +42,9 @@ const App = () => {
             <Route path="reportes/vehiculos" element={<VehiclesReport />} />
             <Route path="reportes/incidentes" element={<IncidentsReport />} />
             <Route path="reportes/aprobacion" element={<ApprovalReports />} />
+            <Route path="admin" element={<Admin />} />
+            <Route path="admin/tipos-reportes" element={<TipoReportes />} />
+            <Route path="admin/status-reportes" element={<StatusReportes />} />
           </Route>
         </Routes>
       </Router>
