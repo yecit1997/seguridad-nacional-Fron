@@ -13,7 +13,7 @@ function PersonalReport() {
     departamento: '',
     tipo: '',
     descripcion: '',
-    hora: new Date().toLocaleTimeString(),
+    fecha_creacion: new Date().toLocaleTimeString(),
   });
 
   const [tipos, setTipos] = useState([]);
@@ -51,8 +51,22 @@ function PersonalReport() {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
+  // Buscamos el objeto del tipo seleccionado para obtener su ID
+  const tipoEncontrado = tipos.find(t => t.nombre === formData.tipo);
+  const idTipoReporte = tipoEncontrado ? (tipoEncontrado.id || tipoEncontrado.id_tipo_reporte) : 1;
+
+  // Construimos el objeto con la estructura exacta que solicitaste
+  // Eliminamos id_reporte para que la DB lo genere automáticamente
+  const dataToSend = {
+    descripcion: formData.descripcion,
+    fecha_creacion: new Date().toISOString(), // Genera el formato 2026-03-14T04:17:17.000Z
+    status_reporte_id_status_reporte: 1,
+    tipo_reporte_id_tipo_reporte: idTipoReporte,
+    usuario_id_usuario_generador: 1,
+  };
+
   try {
-    await createReporte(formData);
+    await createReporte(dataToSend);
 
     alert("Reporte creado exitosamente");
 
@@ -62,7 +76,7 @@ const handleSubmit = async (e) => {
       departamento: '',
       tipo: '',
       descripcion: '',
-      hora: new Date().toLocaleTimeString(),
+      fecha_creacion: new Date().toLocaleTimeString(),
     });
 
   } catch (error) {
@@ -132,8 +146,8 @@ const handleSubmit = async (e) => {
             <label className="block text-gray-700 font-semibold mb-2">Hora</label>
             <input
               type="time"
-              name="hora"
-              value={formData.hora}
+              name="fecha_creacion"
+              value={formData.fecha_creacion}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
