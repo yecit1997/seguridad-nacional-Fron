@@ -37,7 +37,13 @@ const handleSubmit = async (e) => {
   // Eliminamos id_reporte para que la DB lo genere automáticamente
   const dataToSend = {
     descripcion: `Personal DNI: ${formData.dni}, Depto: ${formData.departamento}. Obs: ${formData.descripcion}`,
-    fecha_creacion: new Date().toISOString(), // Genera el formato 2026-03-14T04:17:17.000Z
+    // Combinar la fecha actual con la hora seleccionada por el usuario
+    fecha_creacion: (() => {
+      const now = new Date();
+      const [hours, minutes, seconds] = formData.fecha_creacion.split(':');
+      now.setHours(parseInt(hours, 10), parseInt(minutes, 10), parseInt(seconds, 10) || 0);
+      return now.toISOString();
+    })(),
     status_reporte_id_status_reporte: 1,
     tipo_reporte_id_tipo_reporte: idTipoReporte,
     usuario_id_usuario_generador: 1,
@@ -54,7 +60,7 @@ const handleSubmit = async (e) => {
       departamento: '',
       tipo: '',
       descripcion: '',
-      fecha_creacion: new Date().toLocaleTimeString(),
+      fecha_creacion: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), // Resetear a la hora actual
     });
 
   } catch (error) {

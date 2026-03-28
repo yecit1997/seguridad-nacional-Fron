@@ -6,7 +6,8 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Reportes from './pages/report/Reportes';
 import PersonalReport from './pages/personal/PersonalReport';
-import VehiclesReport from './pages/vehiculos/VehiclesReport';
+import VehiclesReport from './pages/vehiculos/VehiculosReport';
+import VehiclesList from './pages/vehiculos/VehiclesList';
 import IncidentsReport from './pages/incidente/IncidentsReport';
 import ApprovalReports from './pages/supervisor/ApprovalReports';
 import Admin from './pages/admin/Admin';
@@ -38,6 +39,7 @@ const App = () => {
             <Route path="dashboard" element={<div className="p-6"><h1 className="text-2xl font-bold">Dashboard</h1><p>Contenido del Dashboard...</p></div>} />
             <Route path="users" element={<div className="p-6"><h1 className="text-2xl font-bold">Usuarios</h1><p>Gestión de usuarios...</p></div>} />
             <Route path="reportes" element={<Reportes />} />
+            <Route path="vehiculos" element={<VehiclesList />} />
             <Route path="reportes/personal" element={<PersonalReport />} />
             <Route path="reportes/vehiculos" element={<VehiclesReport />} />
             <Route path="reportes/incidentes" element={<IncidentsReport />} />

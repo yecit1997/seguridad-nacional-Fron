@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getTipos } from '../../services/tipoReporte.service';
+import { createReporte } from '../../services/reporte.service';
+import { useReportTypes } from '../../hooks/useReportTypes';
+import { useForm } from '../../hooks/useForm';
 
 function IncidentsReport() {
   const [searchParams] = useSearchParams();
   const tipoSeleccionado = searchParams.get('tipo');
+  const { tipos, loading } = useReportTypes();
 
-  const [formData, setFormData] = useState({
+  const { formData, setFormData, handleChange } = useForm({
     titulo: '',
     descripcion: '',
     tipo: '',
@@ -14,41 +17,45 @@ function IncidentsReport() {
     ubicacion: '',
   });
 
-  const [tipos, setTipos] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    const fetchTipos = async () => {
-      try {
-        const response = await getTipos();
-        const items = Array.isArray(response) ? response : response.data || [];
-        setTipos(items);
-
-        // Preseleccionar el tipo si viene de la URL
-        if (tipoSeleccionado) {
-          const tipoEncontrado = items.find(tipo => tipo.nombre === tipoSeleccionado);
-          if (tipoEncontrado) {
-            setFormData(prev => ({ ...prev, tipo: tipoEncontrado.nombre }));
-          }
-        }
-      } catch (error) {
-        console.error('Error al cargar tipos:', error);
-      } finally {
-        setLoading(false);
+    if (!loading && tipoSeleccionado) {
+      const tipoEncontrado = tipos.find(tipo => tipo.nombre === tipoSeleccionado);
+      if (tipoEncontrado) {
+        setFormData(prev => ({ ...prev, tipo: tipoEncontrado.nombre }));
       }
+    }
+  }, [loading, tipos, tipoSeleccionado, setFormData]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const tipoEncontrado = tipos.find(t => t.nombre === formData.tipo);
+    const idTipoReporte = tipoEncontrado ? (tipoEncontrado.id || tipoEncontrado.id_tipo_reporte) : 1;
+
+    const dataToSend = {
+      descripcion: `Incidente: ${formData.titulo} [Severidad: ${formData.severidad}] en ${formData.ubicacion}. Detalle: ${formData.descripcion}`,
+      fecha_creacion: new Date().toISOString(),
+      status_reporte_id_status_reporte: 1,
+      tipo_reporte_id_tipo_reporte: idTipoReporte,
+      usuario_id_usuario_generador: 1,
     };
 
-    fetchTipos();
-  }, [tipoSeleccionado]);
+    try {
+      await createReporte(dataToSend);
+      alert('Reporte de incidente creado exitosamente');
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Reporte de Incidente:', formData);
-    alert('Reporte creado exitosamente');
+      // Resetear formulario manteniendo el tipo
+      setFormData({
+        titulo: '',
+        descripcion: '',
+        tipo: formData.tipo,
+        severidad: 'media',
+        ubicacion: '',
+      });
+    } catch (error) {
+      console.error('Error al crear reporte:', error);
+      alert('Error al crear el reporte');
+    }
   };
 
   return (
