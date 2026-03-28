@@ -4,14 +4,14 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import Home from './pages/Home';
-import Reportes from './pages/Reportes';
-import PersonalReport from './pages/PersonalReport';
-import VehiclesReport from './pages/VehiclesReport';
-import IncidentsReport from './pages/IncidentsReport';
-import ApprovalReports from './pages/ApprovalReports';
-import Admin from './pages/Admin';
-import TipoReportes from './pages/TipoReportes';
-import StatusReportes from './pages/StatusReportes';
+import Reportes from './pages/report/Reportes';
+import PersonalReport from './pages/personal/PersonalReport';
+import VehiclesReport from './pages/vehiculos/VehiclesReport';
+import IncidentsReport from './pages/incidente/IncidentsReport';
+import ApprovalReports from './pages/supervisor/ApprovalReports';
+import Admin from './pages/admin/Admin';
+import TipoReportes from './pages/report/TipoReportes';
+import StatusReportes from './pages/report/StatusReportes';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
