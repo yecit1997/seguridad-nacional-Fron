@@ -32,14 +32,15 @@ const VehiclesList = () => {
         <div className="flex justify-between items-center mb-6 border-b pb-4">
           <h1 className="text-2xl font-bold text-sky-800">Vehículos en Sistema</h1>
         </div>
-        
+        {console.log("Vehículos cargados:", vehiculos)}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-sky-700 text-white">
                 <th className="border border-gray-300 px-4 py-3 text-left">ID</th>
                 <th className="border border-gray-300 px-4 py-3 text-left">Placa</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Marca / Modelo</th>
+                <th className="border border-gray-300 px-4 py-3 text-left">Conductor</th>
+                <th className="border border-gray-300 px-4 py-3 text-left">Licencia</th>
                 <th className="border border-gray-300 px-4 py-3 text-left">Estado</th>
               </tr>
             </thead>
@@ -51,9 +52,10 @@ const VehiclesList = () => {
               ) : (
                 vehiculos.map((v, index) => (
                   <tr key={v.id_vehiculo || v.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                    <td className="border border-gray-300 px-4 py-2 text-sm text-gray-600">{v.id_vehiculo || v.id || index + 1}</td>
+                    <td className="border border-gray-300 px-4 py-2 text-sm text-gray-600">{v.id_vehiculo}</td>
                     <td className="border border-gray-300 px-4 py-2 font-mono font-bold text-sky-700 uppercase">{v.placa}</td>
-                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{v.marca_modelo || v.marca || 'N/A'}</td>
+                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{v.conductor.persona.nombre  || 'N/A'}</td>
+                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{v.conductor.licencia  || 'N/A'}</td>
                     <td className="border border-gray-300 px-4 py-2">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${v.status === 'inactivo' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                         {v.status || 'Activo'}
