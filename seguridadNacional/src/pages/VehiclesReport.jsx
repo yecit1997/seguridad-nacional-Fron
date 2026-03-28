@@ -1,53 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getTipos } from '../services/tipoReporte.service';
+import { useReportTypes } from '../hooks/useReportTypes';
+import { useForm } from '../hooks/useForm';
+import { createReporte } from '../services/reporte.service';
 
 function VehiclesReport() {
   const [searchParams] = useSearchParams();
   const tipoSeleccionado = searchParams.get('tipo');
+  const { tipos, loading } = useReportTypes();
 
-  const [formData, setFormData] = useState({
+  const { formData, setFormData, handleChange } = useForm({
     placa: '',
     marca: '',
     tipo: '',
     hora: new Date().toLocaleTimeString(),
   });
 
-  const [tipos, setTipos] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  // Efecto específico para la preselección por URL
   useEffect(() => {
-    const fetchTipos = async () => {
-      try {
-        const response = await getTipos();
-        const items = Array.isArray(response) ? response : response.data || [];
-        setTipos(items);
-
-        // Preseleccionar el tipo si viene de la URL
-        if (tipoSeleccionado) {
-          const tipoEncontrado = items.find(tipo => tipo.nombre === tipoSeleccionado);
-          if (tipoEncontrado) {
-            setFormData(prev => ({ ...prev, tipo: tipoEncontrado.nombre }));
-          }
-        }
-      } catch (error) {
-        console.error('Error al cargar tipos:', error);
-      } finally {
-        setLoading(false);
+    if (!loading && tipoSeleccionado) {
+      const tipoEncontrado = tipos.find(tipo => tipo.nombre === tipoSeleccionado);
+      if (tipoEncontrado) {
+        setFormData(prev => ({ ...prev, tipo: tipoEncontrado.nombre }));
       }
+    }
+  }, [loading, tipos, tipoSeleccionado, setFormData]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const tipoEncontrado = tipos.find(t => t.nombre === formData.tipo);
+    const idTipoReporte = tipoEncontrado ? (tipoEncontrado.id || tipoEncontrado.id_tipo_reporte) : 1;
+
+    const dataToSend = {
+      descripcion: `Vehículo Placa: ${formData.placa}, Marca/Modelo: ${formData.marca}`,
+      fecha_creacion: new Date().toISOString(),
+      status_reporte_id_status_reporte: 1,
+      tipo_reporte_id_tipo_reporte: idTipoReporte,
+      usuario_id_usuario_generador: 1, // Idealmente obtener del AuthContext
     };
 
-    fetchTipos();
-  }, [tipoSeleccionado]);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Reporte de Vehículos:', formData);
-    alert('Reporte creado exitosamente');
+    try {
+      await createReporte(dataToSend);
+      alert('Reporte de vehículo creado exitosamente');
+      // Podrías resetear el formulario aquí si lo deseas
+    } catch (error) {
+      console.error('Error al crear reporte:', error);
+      alert('Error al crear el reporte');
+    }
   };
 
   return (

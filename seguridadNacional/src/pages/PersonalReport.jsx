@@ -1,14 +1,15 @@
 import { createReporte } from "../services/reporte.service";
-import { getTipos } from "../services/tipoReporte.service";
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useReportTypes } from '../hooks/useReportTypes';
+import { useForm } from '../hooks/useForm';
 
 function PersonalReport() {
   const [searchParams] = useSearchParams();
   const tipoSeleccionado = searchParams.get('tipo');
+  const { tipos, loading } = useReportTypes();
 
-  const [formData, setFormData] = useState({
-    // Agrega aquí los campos necesarios para el reporte de personal
+  const { formData, setFormData, handleChange } = useForm({
     dni: '', //Documento de la persona a la cual se le hace el reporte
     departamento: '',
     tipo: '',
@@ -16,37 +17,14 @@ function PersonalReport() {
     fecha_creacion: new Date().toLocaleTimeString(),
   });
 
-  const [tipos, setTipos] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    const fetchTipos = async () => {
-      try {
-        const response = await getTipos();
-        const items = Array.isArray(response) ? response : response.data || [];
-        setTipos(items);
-
-        // Preseleccionar el tipo si viene de la URL
-        if (tipoSeleccionado) {
-          const tipoEncontrado = items.find(tipo => tipo.nombre === tipoSeleccionado);
-          if (tipoEncontrado) {
-            setFormData(prev => ({ ...prev, tipo: tipoEncontrado.nombre }));
-          }
-        }
-      } catch (error) {
-        console.error('Error al cargar tipos:', error);
-      } finally {
-        setLoading(false);
+    if (!loading && tipoSeleccionado) {
+      const tipoEncontrado = tipos.find(tipo => tipo.nombre === tipoSeleccionado);
+      if (tipoEncontrado) {
+        setFormData(prev => ({ ...prev, tipo: tipoEncontrado.nombre }));
       }
-    };
-
-    fetchTipos();
-  }, [tipoSeleccionado]);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
+    }
+  }, [loading, tipos, tipoSeleccionado, setFormData]);
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -58,7 +36,7 @@ const handleSubmit = async (e) => {
   // Construimos el objeto con la estructura exacta que solicitaste
   // Eliminamos id_reporte para que la DB lo genere automáticamente
   const dataToSend = {
-    descripcion: formData.descripcion,
+    descripcion: `Personal DNI: ${formData.dni}, Depto: ${formData.departamento}. Obs: ${formData.descripcion}`,
     fecha_creacion: new Date().toISOString(), // Genera el formato 2026-03-14T04:17:17.000Z
     status_reporte_id_status_reporte: 1,
     tipo_reporte_id_tipo_reporte: idTipoReporte,
