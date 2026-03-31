@@ -1,73 +1,213 @@
 import React, { useEffect, useState } from 'react';
-import { getVehiculos } from '../../services/vehiculos.service';
+import { getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getConductores } from '../../services/api.service';
+import DataTable from '../../components/DataTable';
+import Modal from '../../components/Modal';
+import { Input, Button, Select } from '../../components/formComponents';
+import { useToast } from '../../components/Toast';
 
 const VehiclesList = () => {
   const [vehiculos, setVehiculos] = useState([]);
+  const [conductores, setConductores] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedVehiculo, setSelectedVehiculo] = useState(null);
+  const [formData, setFormData] = useState({
+    placa: '',
+    conductor_id_fk_persona: ''
+  });
+  const [saving, setSaving] = useState(false);
+  const { showSuccess, showError } = useToast();
+
+  const columns = [
+    { key: 'id_vehiculo', label: 'ID' },
+    { key: 'placa', label: 'Placa', render: (v) => <span className="font-mono font-bold text-sky-700 uppercase">{v}</span> },
+    { 
+      key: 'conductor', 
+      label: 'Conductor',
+      render: (_, item) => item.conductor?.persona ? `${item.conductor.persona.nombre} ${item.conductor.persona.apellido || ''}` : 'Sin asignar'
+    },
+  ];
+
+  const fetchVehiculos = async () => {
+    try {
+      setLoading(true);
+      const data = await getVehiculos();
+      setVehiculos(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error al cargar vehículos:", err);
+      showError('Error al cargar vehículos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchConductores = async () => {
+    try {
+      const data = await getConductores();
+      setConductores(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error al cargar conductores:", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchVehiculos = async () => {
-      try {
-        const data = await getVehiculos();
-        // Manejamos si la API devuelve el array directamente o dentro de una propiedad data
-        setVehiculos(Array.isArray(data) ? data : data?.data || []);
-      } catch (err) {
-        console.error("Error al cargar vehículos:", err);
-        setError(err.message || "No fue posible cargar la lista de vehículos");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchVehiculos();
+    fetchConductores();
   }, []);
 
-  if (loading) return <div className="p-6 text-center text-sky-700 font-semibold">Cargando vehículos...</div>;
-  if (error) return <div className="p-6 text-red-600 font-bold text-center">Error: {error}</div>;
+  const handleOpenModal = (vehiculo = null) => {
+    if (vehiculo) {
+      setSelectedVehiculo(vehiculo);
+      setFormData({
+        placa: vehiculo.placa || '',
+        conductor_id_fk_persona: vehiculo.conductor_id_fk_persona || ''
+      });
+    } else {
+      setSelectedVehiculo(null);
+      setFormData({
+        placa: '',
+        conductor_id_fk_persona: ''
+      });
+    }
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedVehiculo(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const data = {
+        placa: formData.placa,
+        conductor_id_fk_persona: formData.conductor_id_fk_persona ? parseInt(formData.conductor_id_fk_persona) : null
+      };
+      
+      if (selectedVehiculo) {
+        await updateVehiculo(selectedVehiculo.id_vehiculo, data);
+        showSuccess('Vehículo actualizado correctamente');
+      } else {
+        await createVehiculo(data);
+        showSuccess('Vehículo creado correctamente');
+      }
+      handleCloseModal();
+      fetchVehiculos();
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al guardar vehículo');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedVehiculo) return;
+    setSaving(true);
+    try {
+      await deleteVehiculo(selectedVehiculo.id_vehiculo);
+      showSuccess('Vehículo eliminado correctamente');
+      setDeleteModalOpen(false);
+      setSelectedVehiculo(null);
+      fetchVehiculos();
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al eliminar vehículo');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteClick = (vehiculo) => {
+    setSelectedVehiculo(vehiculo);
+    setDeleteModalOpen(true);
+  };
+
+  const conductorOptions = [
+    { value: '', label: 'Sin asignar' },
+    ...conductores.map(c => ({
+      value: c.id_fk_persona,
+      label: c.persona ? `${c.persona.nombre} ${c.persona.apellido || ''} - ${c.licencia}` : `ID: ${c.id_fk_persona}`
+    }))
+  ];
 
   return (
-    <div className="p-6">
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6 border-b pb-4">
-          <h1 className="text-2xl font-bold text-sky-800">Vehículos en Sistema</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">🚗 Vehículos</h1>
+          <p className="text-gray-500 mt-1">Gestión de vehículos del sistema</p>
         </div>
-        {console.log("Vehículos cargados:", vehiculos)}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-sky-700 text-white">
-                <th className="border border-gray-300 px-4 py-3 text-left">ID</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Placa</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Conductor</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Licencia</th>
-                <th className="border border-gray-300 px-4 py-3 text-left">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vehiculos.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="text-center py-8 text-gray-500 italic">No hay vehículos registrados en la base de datos.</td>
-                </tr>
-              ) : (
-                vehiculos.map((v, index) => (
-                  <tr key={v.id_vehiculo || v.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                    <td className="border border-gray-300 px-4 py-2 text-sm text-gray-600">{v.id_vehiculo}</td>
-                    <td className="border border-gray-300 px-4 py-2 font-mono font-bold text-sky-700 uppercase">{v.placa}</td>
-                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{v.conductor.persona.nombre  || 'N/A'}</td>
-                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{v.conductor.licencia  || 'N/A'}</td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${v.status === 'inactivo' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                        {v.status || 'Activo'}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Button onClick={() => handleOpenModal()}>
+          <span className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Nuevo Vehículo
+          </span>
+        </Button>
       </div>
+
+      <DataTable
+        columns={columns}
+        data={vehiculos}
+        loading={loading}
+        onEdit={handleOpenModal}
+        onDelete={handleDeleteClick}
+        searchPlaceholder="Buscar por placa..."
+      />
+
+      <Modal
+        isOpen={modalOpen}
+        onClose={handleCloseModal}
+        title={selectedVehiculo ? '✏️ Editar Vehículo' : '➕ Nuevo Vehículo'}
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={handleCloseModal}>Cancelar</Button>
+            <Button onClick={handleSubmit} loading={saving}>
+              {selectedVehiculo ? 'Actualizar' : 'Crear'}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSubmit}>
+          <Input
+            label="Placa"
+            name="placa"
+            value={formData.placa}
+            onChange={(e) => setFormData({ ...formData, placa: e.target.value.toUpperCase() })}
+            required
+            placeholder="Ej: ABC-123"
+          />
+          <Select
+            label="Conductor Asignado"
+            name="conductor_id_fk_persona"
+            value={formData.conductor_id_fk_persona}
+            onChange={(e) => setFormData({ ...formData, conductor_id_fk_persona: e.target.value })}
+            options={conductorOptions}
+          />
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="⚠️ Confirmar Eliminación"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteModalOpen(false)}>Cancelar</Button>
+            <Button variant="danger" onClick={handleDelete} loading={saving}>Eliminar</Button>
+          </>
+        }
+      >
+        <p className="text-gray-700">
+          ¿Está seguro de eliminar el vehículo con placa <strong>{selectedVehiculo?.placa}</strong>?
+          Esta acción no se puede deshacer.
+        </p>
+      </Modal>
     </div>
   );
 };

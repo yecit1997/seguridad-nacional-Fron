@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getVehiculos } from '../services/vehiculos.service';
+import { getVehiculos } from '../services/api.service';
 
 export const useVehicles = () => {
   const [vehiculos, setVehiculos] = useState([]);

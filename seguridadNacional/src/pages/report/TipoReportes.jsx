@@ -1,129 +1,175 @@
 import React, { useEffect, useState } from 'react';
-import { getTipos } from '../../services/tipoReporte.service';
+import { getTipos, createTipo, updateTipo, deleteTipo } from '../../services/api.service';
+import DataTable from '../../components/DataTable';
+import Modal from '../../components/Modal';
+import { Input, Button } from '../../components/formComponents';
+import { useToast } from '../../components/Toast';
 
 const TipoReportes = () => {
+  const { showSuccess, showError } = useToast();
   const [tipos, setTipos] = useState([]);
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [mostrarCrear, setMostrarCrear] = useState(false);
-  const [nuevoTipo, setNuevoTipo] = useState({ nombre: '', descripcion: '' });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedTipo, setSelectedTipo] = useState(null);
+  const [formData, setFormData] = useState({ nombre: '', descripcion: '' });
+  const [saving, setSaving] = useState(false);
+
+  const columns = [
+    { key: 'id_tipo_reporte', label: 'ID' },
+    { key: 'nombre', label: 'Nombre' },
+    { key: 'descripcion', label: 'Descripción' },
+  ];
+
+  const fetchTipos = async () => {
+    try {
+      setLoading(true);
+      const data = await getTipos();
+      setTipos(Array.isArray(data) ? data : []);
+    } catch (err) {
+      showError('Error al cargar tipos de reporte');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTipos = async () => {
-      try {
-        const response = await getTipos();
-        // Ajustar según la estructura: { success, data } o directamente array
-        const items = Array.isArray(response) ? response : response.data || [];
-        setTipos(items);
-      } catch (err) {
-        setError(err.response?.data?.message || err.message || 'No fue posible cargar los tipos');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTipos();
   }, []);
 
-  if (loading) {
-    return <p className="text-gray-600">Cargando tipos de reportes...</p>;
-  }
+  const handleOpenModal = (tipo = null) => {
+    if (tipo) {
+      setSelectedTipo(tipo);
+      setFormData({ nombre: tipo.nombre || '', descripcion: tipo.descripcion || '' });
+    } else {
+      setSelectedTipo(null);
+      setFormData({ nombre: '', descripcion: '' });
+    }
+    setModalOpen(true);
+  };
 
-  if (error) {
-    return <p className="text-red-600">Error: {error}</p>;
-  }
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedTipo(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (selectedTipo) {
+        await updateTipo(selectedTipo.id_tipo_reporte, formData);
+        showSuccess('Tipo de reporte actualizado correctamente');
+      } else {
+        await createTipo(formData);
+        showSuccess('Tipo de reporte creado correctamente');
+      }
+      handleCloseModal();
+      fetchTipos();
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al guardar tipo de reporte');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedTipo) return;
+    setSaving(true);
+    try {
+      await deleteTipo(selectedTipo.id_tipo_reporte);
+      showSuccess('Tipo de reporte eliminado correctamente');
+      setDeleteModalOpen(false);
+      setSelectedTipo(null);
+      fetchTipos();
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al eliminar tipo de reporte');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteClick = (tipo) => {
+    setSelectedTipo(tipo);
+    setDeleteModalOpen(true);
+  };
 
   return (
-    <div className="p-6 w-full">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold">Tipos de Reporte</h1>
-            <p className="text-gray-600">Estos tipos se cargan desde la base de datos.</p>
-          </div>
-          <button
-            onClick={() => setMostrarCrear(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow"
-          >
-            + Crear tipo de reporte
-          </button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">📋 Tipos de Reporte</h1>
+          <p className="text-gray-500 mt-1">Gestión de tipos de reporte del sistema</p>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-slate-100">
-              <tr>
-                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">ID</th>
-                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Nombre</th>
-                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Descripción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {tipos.map((tipo) => (
-                <tr key={tipo.id || tipo.id_tipo_reporte || tipo.id_tipo} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm text-gray-700">{tipo.id || tipo.id_tipo_reporte || '-'}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{tipo.nombre || tipo.tipo}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{tipo.descripcion || tipo.descripcion_corta || 'Sin descripción'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Button onClick={() => handleOpenModal()}>
+          <span className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Nuevo Tipo
+          </span>
+        </Button>
       </div>
 
-      {mostrarCrear && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
-            <h2 className="text-xl font-bold mb-4">Crear tipo de reporte</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const nuevo = {
-                  ...nuevoTipo,
-                  id: tipos.length + 1,
-                };
-                setTipos([nuevo, ...tipos]);
-                setNuevoTipo({ nombre: '', descripcion: '' });
-                setMostrarCrear(false);
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-semibold mb-1">Nombre</label>
-                <input
-                  value={nuevoTipo.nombre}
-                  onChange={(e) => setNuevoTipo({ ...nuevoTipo, nombre: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Ej: Horario de Personal"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1">Descripción</label>
-                <textarea
-                  value={nuevoTipo.descripcion}
-                  onChange={(e) => setNuevoTipo({ ...nuevoTipo, descripcion: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  rows={3}
-                  placeholder="Descripción del tipo de reporte"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMostrarCrear(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                  Guardar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={tipos}
+        loading={loading}
+        onEdit={handleOpenModal}
+        onDelete={handleDeleteClick}
+        searchPlaceholder="Buscar por nombre..."
+      />
+
+      <Modal
+        isOpen={modalOpen}
+        onClose={handleCloseModal}
+        title={selectedTipo ? '✏️ Editar Tipo de Reporte' : '➕ Nuevo Tipo de Reporte'}
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={handleCloseModal}>Cancelar</Button>
+            <Button onClick={handleSubmit} loading={saving}>
+              {selectedTipo ? 'Actualizar' : 'Crear'}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSubmit}>
+          <Input
+            label="Nombre"
+            name="nombre"
+            value={formData.nombre}
+            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+            required
+            placeholder="Ej: Entrada/Salida de Personal"
+          />
+          <Input
+            label="Descripción"
+            name="descripcion"
+            value={formData.descripcion}
+            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+            placeholder="Descripción del tipo de reporte"
+          />
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="⚠️ Confirmar Eliminación"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteModalOpen(false)}>Cancelar</Button>
+            <Button variant="danger" onClick={handleDelete} loading={saving}>Eliminar</Button>
+          </>
+        }
+      >
+        <p className="text-gray-700">
+          ¿Está seguro de eliminar el tipo de reporte <strong>{selectedTipo?.nombre}</strong>?
+          Esta acción no se puede deshacer.
+        </p>
+      </Modal>
     </div>
   );
 };

@@ -13,9 +13,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
 
     if (token) {
-      setUser({ token });
+      try {
+        const usuario = storedUser ? JSON.parse(storedUser) : null;
+        setUser({ token, usuario });
+      } catch (e) {
+        setUser({ token });
+      }
     }
 
     setLoading(false);
@@ -24,14 +30,21 @@ export const AuthProvider = ({ children }) => {
   const login = async (nombre_usuario, contrasena) => {
     try {
       const response = await client.post('/auth/login', { nombre_usuario, contrasena });
-      const token = response.data.token || response.data.access_token || response.data?.data?.token;
+      const responseData = response.data;
+      
+      if (!responseData.success) {
+        throw new Error(responseData.message || 'Login fallido');
+      }
+
+      const token = responseData.data?.token;
 
       if (!token) {
         throw new Error('No se recibió token en la respuesta del servidor');
       }
 
       localStorage.setItem('token', token);
-      setUser({ token });
+      localStorage.setItem('user', JSON.stringify(responseData.data?.usuario));
+      setUser({ token, usuario: responseData.data?.usuario });
       return { success: true };
     } catch (error) {
       const message =
