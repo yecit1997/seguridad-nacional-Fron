@@ -153,25 +153,8 @@ function PersonalReport() {
               placeholder="Ej: Seguridad, Administración"
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">Tipo</label>
-            <select
-              name="tipo"
-              value={formData.tipo}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
-              required
-              disabled
-            >
-              <option value="">Selecciona un tipo</option>
-              {tipos.map((tipo) => (
-                <option key={tipo.id || tipo.id_tipo_reporte} value={tipo.nombre}>
-                  {tipo.nombre}
-                </option>
-              ))}
-            </select>
-            <input type="hidden" name="tipo" value={formData.tipo} />
-          </div>
+          {/* ls
+          </div> */}
           <div className="mb-6">
             <label className="block text-gray-700 font-semibold mb-2">Descripción</label>
             <textarea
