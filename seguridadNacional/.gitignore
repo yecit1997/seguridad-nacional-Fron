@@ -1,3 +1,7 @@
+seguridadNacional.zip
+*.zip
+*.tar.gz
+
 # Logs
 logs
 *.log
