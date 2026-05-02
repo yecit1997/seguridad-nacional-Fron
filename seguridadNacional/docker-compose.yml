@@ -3,17 +3,19 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: ./NEW_FRON/seguridadNacional
+      context: .
       dockerfile: Dockerfile
     container_name: seguridad_frontend
     restart: unless-stopped
     environment:
-      VITE_API_BASE_URL: http://localhost:8080/api
+      # Nota: Si el navegador accede al back, 'localhost' está bien. 
+      # Si el servidor (Nginx) accede al back, usarías el nombre del servicio.
+      VITE_API_BASE_URL: http://localhost:8080/api 
     ports:
       - "5173:5173"
     networks:
-      - frontend_network
+      - mi_red_global # 1. Asignas la red al servicio
 
 networks:
-  frontend_network:
-    driver: bridge
+  mi_red_global:    # 2. Defines la red al final del archivo
+    external: true   # Indicas que la red fue creada manualmente (fuera de aquí)
